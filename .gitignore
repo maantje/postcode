@@ -1,0 +1,6 @@
+
+bin
+.build
+.env
+*_templ.go
+database

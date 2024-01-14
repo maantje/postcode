@@ -1,0 +1,157 @@
+
+package example
+
+import (
+	"github.com/maantje/postcode/view/layout"
+)
+
+type InputProps struct {
+	Label       string
+	id          string
+	typ         string
+	Placeholder string
+	Disabled    bool
+}
+
+templ Input(props InputProps) {
+	<div>
+		<label class="block text-gray-700 text-sm font-bold mb-2" for={ props.id }>
+			{ props.Label }
+		</label>
+		<input
+			class="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+			id={ props.id }
+			type={ props.typ }
+			placeholder={ props.Placeholder }
+			disabled?={ props.Disabled }
+		/>
+	</div>
+}
+
+templ Index() {
+	@layout.Base("Example") {
+		<div class="flex justify-center bg-gray-100 h-screen p-4 md:p-0">
+			<div class="w-full max-w-xl mt-8 md:mt-24">
+				<form class="bg-white border rounded md:p-8 p-4 gap-4 flex flex-col">
+					<div class="flex gap-2">
+						@Input(InputProps{
+                            id: "postcode",
+                            Label: "Postcode",
+                            typ: "text",
+                            Placeholder: "9401AM",
+                        })
+						@Input(InputProps{
+                            id: "house_number",
+                            Label: "House number",
+                            typ: "text",
+                            Placeholder: "1",
+                        })
+						@Input(InputProps{
+                            id: "addition",
+                            Label: "Addition",
+                            typ: "text",
+                            Placeholder: "A",
+                        })
+					</div>
+					@Input(InputProps{
+                        id: "street",
+                        Label: "Street",
+                        typ: "text",
+                        Disabled: true,
+                    })
+					@Input(InputProps{
+                        id: "city",
+                        Label: "City",
+                        typ: "text",
+                        Disabled: true,
+                    })
+				</form>
+				<div id="map" class="h-[296px] rounded mt-4 hidden"></div>
+				<div class="mt-4 md:p-8 p-4 bg-gray-800 text-gray-200 hidden rounded md:text-sm text-xs">
+					<pre id="curl" class="mb-2"></pre>
+					<pre id="response"></pre>
+				</div>
+			</div>
+			<script>
+                window.addEventListener('DOMContentLoaded', function () {
+                    const postcodeElement = document.getElementById('postcode')
+                    const houseNumberElement = document.getElementById('house_number')
+                    const additionElement = document.getElementById('addition')
+                    const streetElement = document.getElementById('street')
+                    const cityElement = document.getElementById('city')
+                    const responseElement = document.getElementById('response')
+                    const curlElement = document.getElementById('curl')
+                    const mapElement = document.getElementById('map')
+
+                    const map = L.map('map')
+
+                    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }).addTo(map);
+
+                    var marker
+
+                    const onKeyUp = async () => {
+
+                        const postcode = postcodeElement.value;
+                        const houseNumber = houseNumberElement.value
+                        const addition = additionElement.value
+
+                        if (!postcode || !houseNumber) {
+                            return
+                        }
+
+
+                        const params = new URLSearchParams({
+                            addition
+                        });
+
+
+                        const url = addition
+                            ? `/postcode/${postcode}/${houseNumber}?${params}`
+                            : `/postcode/${postcode}/${houseNumber}`
+
+                        try {
+                            const response = await fetch(url)
+                            const address = await response.json();
+
+                            if (address.city) {
+                                if (marker) {
+                                    map.removeLayer(marker)
+                                    marker = undefined
+                                }
+
+                                curlElement.innerText = `curl ${location.protocol}//${location.host}${url}`
+                                responseElement.parentElement.classList.remove('hidden')
+                                mapElement.classList.remove('hidden')
+                                responseElement.innerText = JSON.stringify(address, null, 4)
+                                streetElement.value = address.street
+                                cityElement.value = address.city
+
+                                const bounds = [address.latitude, address.longitude];
+
+                                map.setView(bounds, 13);
+                                marker = L.marker(bounds).addTo(map);
+
+
+                                return
+                            }
+                        } catch (e) {
+                            throw e
+                        }
+
+                        responseElement.parentElement.classList.add('hidden')
+                        mapElement.classList.add('hidden')
+                        streetElement.value = ""
+                        cityElement.value = ""
+                    }
+
+                    postcodeElement.addEventListener("keyup", onKeyUp)
+                    houseNumberElement.addEventListener("keyup", onKeyUp)
+                    additionElement.addEventListener("keyup", onKeyUp)
+                });
+            </script>
+		</div>
+	}
+}

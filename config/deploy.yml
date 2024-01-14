@@ -1,0 +1,16 @@
+service: postcode
+
+image: ghcr.io/maantje/postcode
+
+servers:
+  - 167.235.71.203
+
+registry:
+  server: ghcr.io
+  username: maantje
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+healthcheck:
+  path: /docs
+  port: 80
