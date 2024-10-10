@@ -4,3 +4,4 @@ bin
 .env
 *_templ.go
 database
+.kamal/secrets

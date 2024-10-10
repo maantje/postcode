@@ -3,7 +3,13 @@ service: postcode
 image: ghcr.io/maantje/postcode
 
 servers:
-  - 167.235.71.203
+  - postcode.j4mie.com
+
+proxy:
+  host: postcode.j4mie.com
+  ssl: true
+  healthcheck:
+    path: /docs
 
 registry:
   server: ghcr.io
@@ -11,6 +17,5 @@ registry:
   password:
     - KAMAL_REGISTRY_PASSWORD
 
-healthcheck:
-  path: /docs
-  port: 80
+builder:
+  arch: arm64

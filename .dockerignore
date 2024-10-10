@@ -3,3 +3,4 @@ DockerFile
 .vscode
 .gitignore
 database
+.kamal
